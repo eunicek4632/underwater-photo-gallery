@@ -1,0 +1,6 @@
+{
+  "name": "Subsea Gallery - Underwater Creature Photo Showcase",
+  "description": "An underwater photography gallery featuring creature discovery with rich metadata, filters, and depth details, alongside an admin dashboard for photo uploads and management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
