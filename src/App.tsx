@@ -6,7 +6,7 @@ import { VisitorGallery } from './components/VisitorGallery';
 import { AdminDashboard } from './components/AdminDashboard';
 import { CreatureDetailModal } from './components/CreatureDetailModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
-import { ShieldAlert, KeyRound } from 'lucide-react';
+import { validateAdminSession, terminateAdminSession } from './utils/auth';
 
 const LOCAL_STORAGE_CREATURES_KEY = 'subsea_gallery_creatures_v1';
 const LOCAL_STORAGE_FAVORITES_KEY = 'subsea_gallery_favorites_v1';
@@ -56,15 +56,23 @@ export default function App() {
 
   // Admin Auth & URL Detection State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem(SESSION_ADMIN_AUTH_KEY) === 'true';
-    } catch (e) {
-      return false;
-    }
+    return validateAdminSession();
   });
 
   const [hasAdminUrlTrigger, setHasAdminUrlTrigger] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+
+  const cleanAdminUrl = () => {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('admin');
+      let search = url.search.replace(/([?&])admin(=[^&]*)?(&|$)/gi, '$1').replace(/[?&]$/, '').replace(/\?&/, '?');
+      let hash = url.hash.replace(/#admin/gi, '');
+      window.history.replaceState(null, '', url.pathname + search + hash);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Check URL hash or query parameters for "admin"
   const checkUrlForAdminTrigger = useCallback(() => {
@@ -78,8 +86,12 @@ export default function App() {
       path.includes('admin');
 
     if (urlHasAdmin) {
-      setHasAdminUrlTrigger(true);
-      if (!isAdminAuthenticated) {
+      if (isAdminAuthenticated) {
+        setHasAdminUrlTrigger(true);
+        setActiveView('admin');
+      } else {
+        setHasAdminUrlTrigger(true);
+        setActiveView('visitor');
         setIsLoginModalOpen(true);
       }
     } else {
@@ -98,6 +110,14 @@ export default function App() {
       window.removeEventListener('popstate', checkUrlForAdminTrigger);
     };
   }, [checkUrlForAdminTrigger]);
+
+  // Ensure unauthenticated users are never stuck on admin view
+  useEffect(() => {
+    if (activeView === 'admin' && !isAdminAuthenticated) {
+      setActiveView('visitor');
+      setIsLoginModalOpen(true);
+    }
+  }, [activeView, isAdminAuthenticated]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -181,6 +201,7 @@ export default function App() {
     setIsAdminAuthenticated(true);
     setIsLoginModalOpen(false);
     setActiveView('admin');
+    setHasAdminUrlTrigger(true);
     try {
       sessionStorage.setItem(SESSION_ADMIN_AUTH_KEY, 'true');
     } catch (e) {
@@ -188,19 +209,21 @@ export default function App() {
     }
   };
 
+  const handleCloseLoginModal = () => {
+    setIsLoginModalOpen(false);
+    if (!isAdminAuthenticated) {
+      setActiveView('visitor');
+      setHasAdminUrlTrigger(false);
+      cleanAdminUrl();
+    }
+  };
+
   const handleLogoutAdmin = () => {
+    terminateAdminSession();
     setIsAdminAuthenticated(false);
     setActiveView('visitor');
-    try {
-      sessionStorage.removeItem(SESSION_ADMIN_AUTH_KEY);
-    } catch (e) {
-      console.error(e);
-    }
-    // Optionally clean URL hash
-    if (window.location.hash.includes('admin')) {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      setHasAdminUrlTrigger(false);
-    }
+    setHasAdminUrlTrigger(false);
+    cleanAdminUrl();
   };
 
   const hasAdminAccess = hasAdminUrlTrigger || isAdminAuthenticated;
@@ -211,7 +234,13 @@ export default function App() {
       {/* Header Bar */}
       <Header
         activeView={activeView}
-        setActiveView={setActiveView}
+        setActiveView={(view) => {
+          if (view === 'admin' && !isAdminAuthenticated) {
+            setIsLoginModalOpen(true);
+          } else {
+            setActiveView(view);
+          }
+        }}
         totalCreatures={creatures.length}
         favoritesCount={favorites.length}
         showFavoritesOnly={showFavoritesOnly}
@@ -224,7 +253,15 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeView === 'visitor' ? (
+        {activeView === 'admin' && isAdminAuthenticated ? (
+          <AdminDashboard
+            creatures={creatures}
+            onAddCreature={handleAddCreature}
+            onUpdateCreature={handleUpdateCreature}
+            onDeleteCreature={handleDeleteCreature}
+            onResetToDefault={handleResetToDefault}
+          />
+        ) : (
           <VisitorGallery
             creatures={creatures}
             onSelectCreature={setSelectedCreature}
@@ -235,28 +272,6 @@ export default function App() {
             showFavoritesOnly={showFavoritesOnly}
             setShowFavoritesOnly={setShowFavoritesOnly}
           />
-        ) : isAdminAuthenticated ? (
-          <AdminDashboard
-            creatures={creatures}
-            onAddCreature={handleAddCreature}
-            onUpdateCreature={handleUpdateCreature}
-            onDeleteCreature={handleDeleteCreature}
-            onResetToDefault={handleResetToDefault}
-          />
-        ) : (
-          <div className="text-center py-20 px-4 bg-slate-900/80 border border-slate-800 rounded-3xl max-w-lg mx-auto shadow-2xl space-y-4">
-            <ShieldAlert className="w-12 h-12 text-cyan-400 mx-auto" />
-            <h3 className="text-xl font-bold text-slate-100">Admin Authentication Required</h3>
-            <p className="text-xs text-slate-400">
-              Please enter your curator username and password to manage and upload creature photos.
-            </p>
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
-              className="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 text-white font-bold rounded-xl text-xs hover:from-cyan-500 hover:to-teal-500 transition-all shadow-lg shadow-cyan-950/50"
-            >
-              Sign In to Admin Portal
-            </button>
-          </div>
         )}
       </main>
 
@@ -273,7 +288,7 @@ export default function App() {
       {/* Admin Login Authentication Modal */}
       <AdminLoginModal
         isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
+        onClose={handleCloseLoginModal}
         onLoginSuccess={handleAdminLoginSuccess}
       />
 

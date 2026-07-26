@@ -54,4 +54,4 @@ export interface FilterState {
 }
 
 export type ActiveViewMode = 'visitor' | 'admin';
-export type AdminTab = 'upload' | 'manage' | 'analytics';
+export type AdminTab = 'upload' | 'manage' | 'analytics' | 'security';

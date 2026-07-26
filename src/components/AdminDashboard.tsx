@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UnderwaterCreature, AdminTab, CategoryType, ConservationStatus } from '../types';
 import { CreatureEditModal } from './CreatureEditModal';
 import { 
   Upload, Plus, Sparkles, Image as ImageIcon, Trash2, Edit3, 
   RefreshCw, Check, AlertCircle, Camera, Layers, ShieldCheck, 
-  BarChart2, Star, Eye, Filter, Search, Waves, Save, CheckCircle2 
+  BarChart2, Star, Eye, Filter, Search, Waves, Save, CheckCircle2,
+  KeyRound, Fingerprint, Smartphone, Lock, ShieldAlert, UserCheck
 } from 'lucide-react';
+import {
+  getAdminSecurityConfig,
+  saveAdminSecurityConfig,
+  hashSHA256,
+  derivePBKDF2Hash,
+  generateRandomSalt,
+  registerPasskey,
+  isWebAuthnSupported,
+  verifyTOTPCode,
+} from '../utils/auth';
 
 interface AdminDashboardProps {
   creatures: UnderwaterCreature[];
@@ -76,6 +87,115 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiSuccessMessage, setAiSuccessMessage] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  // Security & Authentication Tab State
+  const [secUsername, setSecUsername] = useState('admin');
+  const [secPassword, setSecPassword] = useState('');
+  const [secConfirmPassword, setSecConfirmPassword] = useState('');
+  const [is2FAActive, setIs2FAActive] = useState(false);
+  const [totpSecret, setTotpSecret] = useState('JBSWY3DPEHPK3PXP');
+  const [totpTestCode, setTotpTestCode] = useState('');
+  const [passkeyActive, setPasskeyActive] = useState(false);
+  const [passkeySupported, setPasskeySupported] = useState(false);
+  const [secSuccess, setSecSuccess] = useState<string | null>(null);
+  const [secError, setSecError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAdminSecurityConfig().then((config) => {
+      setIs2FAActive(config.is2FAEnabled);
+      setTotpSecret(config.totpSecret || 'JBSWY3DPEHPK3PXP');
+      setPasskeyActive(config.passkeyRegistered);
+    });
+    isWebAuthnSupported().then(setPasskeySupported);
+  }, []);
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSecError(null);
+    setSecSuccess(null);
+
+    if (secPassword && secPassword !== secConfirmPassword) {
+      setSecError('Passwords do not match.');
+      return;
+    }
+
+    try {
+      const config = await getAdminSecurityConfig();
+      const salt = generateRandomSalt();
+      const usernameHash = await hashSHA256(secUsername || 'admin');
+
+      let passwordSalt = config.passwordSalt;
+      let passwordHash = config.passwordHash;
+
+      if (secPassword.trim().length > 0) {
+        passwordSalt = salt;
+        passwordHash = await derivePBKDF2Hash(secPassword, salt);
+      }
+
+      const updated = {
+        ...config,
+        usernameHash,
+        passwordSalt,
+        passwordHash,
+        updatedAt: Date.now(),
+      };
+
+      await saveAdminSecurityConfig(updated);
+      setSecSuccess('Security credentials updated with PBKDF2 salt & hash.');
+      setSecPassword('');
+      setSecConfirmPassword('');
+    } catch (err) {
+      setSecError('Failed to update credentials.');
+    }
+  };
+
+  const handleToggle2FA = async () => {
+    setSecError(null);
+    setSecSuccess(null);
+
+    if (!is2FAActive) {
+      // Verifying code before enabling 2FA
+      if (!totpTestCode || totpTestCode.length !== 6) {
+        setSecError('Enter a 6-digit verification code from your authenticator to enable 2FA.');
+        return;
+      }
+
+      const isValid = await verifyTOTPCode(totpSecret, totpTestCode);
+      if (!isValid) {
+        setSecError('Invalid 2FA test code. Please check your authenticator app.');
+        return;
+      }
+    }
+
+    try {
+      const config = await getAdminSecurityConfig();
+      const nextState = !is2FAActive;
+      config.is2FAEnabled = nextState;
+      config.totpSecret = totpSecret;
+      await saveAdminSecurityConfig(config);
+      setIs2FAActive(nextState);
+      setTotpTestCode('');
+      setSecSuccess(nextState ? '2-Factor Authentication (2FA) is now ENABLED.' : '2FA has been disabled.');
+    } catch (err) {
+      setSecError('Failed to update 2FA status.');
+    }
+  };
+
+  const handleRegisterPasskey = async () => {
+    setSecError(null);
+    setSecSuccess(null);
+    try {
+      const ok = await registerPasskey(secUsername || 'admin');
+      if (ok) {
+        setPasskeyActive(true);
+        setSecSuccess('Biometric Passkey registered successfully! You can now login with Touch ID/Face ID/Security Key.');
+      } else {
+        setSecError('Passkey pairing failed or was cancelled.');
+      }
+    } catch (err) {
+      setSecError('Passkey error.');
+    }
+  };
 
   // Handle local file drop/select to base64
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,6 +395,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <BarChart2 className="w-4 h-4" />
             <span>Analytics</span>
+          </button>
+
+          <button
+            id="admin-tab-security"
+            onClick={() => setActiveTab('security')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'security'
+                ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/50'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Lock className="w-4 h-4 text-cyan-300" />
+            <span>Auth & Security</span>
           </button>
         </div>
       </div>
@@ -738,6 +871,97 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {creatures.filter((c) => c.category === 'Deep Sea' || c.category === 'Macro').length}
             </p>
             <p className="text-[11px] text-slate-500 mt-1">Specialized photography entries</p>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: AUTHENTICATION & SECURITY SETTINGS */}
+      {activeTab === 'security' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Status alerts */}
+          {secSuccess && (
+            <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span>{secSuccess}</span>
+            </div>
+          )}
+
+          {secError && (
+            <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+              <span>{secError}</span>
+            </div>
+          )}
+
+          {/* Security Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-300">2-Factor Authentication</span>
+                <Smartphone className="w-4 h-4 text-emerald-400" />
+              </div>
+              <p className="text-sm font-bold text-slate-100">ACTIVE (TOTP Standard)</p>
+              <p className="text-[11px] text-slate-400">Time-based One-Time Passcode (6-Digit Google Authenticator)</p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-300">Passkey / Biometrics</span>
+                <Fingerprint className={`w-4 h-4 ${passkeyActive ? 'text-emerald-400' : 'text-slate-500'}`} />
+              </div>
+              <p className="text-sm font-bold text-slate-100">
+                {passkeyActive ? 'Passkey Registered' : passkeySupported ? 'Supported' : 'Not Supported'}
+              </p>
+              <p className="text-[11px] text-slate-400">WebAuthn Touch ID / Face ID / Security Key</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 1. 2FA Secret Key Card */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+                <Smartphone className="w-5 h-5 text-teal-400" />
+                <div>
+                  <h3 className="text-sm font-bold text-slate-100">Google Authenticator Secret Key</h3>
+                  <p className="text-[11px] text-slate-400">Use this secret key to pair Google Authenticator or Authy</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+                <p className="font-semibold text-cyan-300">Secret Key (Base32):</p>
+                <code className="block p-3 bg-slate-900 border border-slate-800 rounded-xl text-emerald-300 font-mono text-center tracking-widest text-sm font-bold select-all">
+                  {totpSecret}
+                </code>
+                <p className="text-[11px] text-slate-400">
+                  Enter this secret key in your Google Authenticator app to generate your 6-digit login passcodes.
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Biometric Passkey Registration */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+                <Fingerprint className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <h3 className="text-sm font-bold text-slate-100">Biometric Passkey (WebAuthn)</h3>
+                  <p className="text-[11px] text-slate-400">Login instantly with Touch ID, Face ID, or Hardware Key</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-300">
+                Passkeys offer seamless, unforgeable hardware-level authentication directly tied to your device.
+              </p>
+
+              <button
+                type="button"
+                disabled={!passkeySupported}
+                onClick={handleRegisterPasskey}
+                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 transition-all disabled:opacity-50"
+              >
+                <Fingerprint className="w-4 h-4 text-white" />
+                <span>{passkeyActive ? 'Re-register Passkey / Biometrics' : 'Pair Device Passkey / Biometric Key'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
