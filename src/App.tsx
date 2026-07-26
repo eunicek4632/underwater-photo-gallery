@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UnderwaterCreature, ActiveViewMode } from './types';
 import { INITIAL_CREATURES } from './data/initialCreatures';
 import { Header } from './components/Header';
 import { VisitorGallery } from './components/VisitorGallery';
 import { AdminDashboard } from './components/AdminDashboard';
 import { CreatureDetailModal } from './components/CreatureDetailModal';
+import { AdminLoginModal } from './components/AdminLoginModal';
+import { ShieldAlert, KeyRound } from 'lucide-react';
 
 const LOCAL_STORAGE_CREATURES_KEY = 'subsea_gallery_creatures_v1';
 const LOCAL_STORAGE_FAVORITES_KEY = 'subsea_gallery_favorites_v1';
 const LOCAL_STORAGE_LIKES_KEY = 'subsea_gallery_user_likes_v1';
+const SESSION_ADMIN_AUTH_KEY = 'subsea_gallery_admin_authed_v1';
 
 export default function App() {
   // Load initial creatures from localStorage or default
@@ -50,6 +53,51 @@ export default function App() {
   const [activeView, setActiveView] = useState<ActiveViewMode>('visitor');
   const [selectedCreature, setSelectedCreature] = useState<UnderwaterCreature | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  // Admin Auth & URL Detection State
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(SESSION_ADMIN_AUTH_KEY) === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const [hasAdminUrlTrigger, setHasAdminUrlTrigger] = useState<boolean>(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+
+  // Check URL hash or query parameters for "admin"
+  const checkUrlForAdminTrigger = useCallback(() => {
+    const hash = window.location.hash.toLowerCase();
+    const search = window.location.search.toLowerCase();
+    const path = window.location.pathname.toLowerCase();
+
+    const urlHasAdmin = 
+      hash.includes('admin') || 
+      search.includes('admin') || 
+      path.includes('admin');
+
+    if (urlHasAdmin) {
+      setHasAdminUrlTrigger(true);
+      if (!isAdminAuthenticated) {
+        setIsLoginModalOpen(true);
+      }
+    } else {
+      setHasAdminUrlTrigger(false);
+    }
+  }, [isAdminAuthenticated]);
+
+  useEffect(() => {
+    checkUrlForAdminTrigger();
+
+    window.addEventListener('hashchange', checkUrlForAdminTrigger);
+    window.addEventListener('popstate', checkUrlForAdminTrigger);
+
+    return () => {
+      window.removeEventListener('hashchange', checkUrlForAdminTrigger);
+      window.removeEventListener('popstate', checkUrlForAdminTrigger);
+    };
+  }, [checkUrlForAdminTrigger]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -129,8 +177,36 @@ export default function App() {
     }
   };
 
+  const handleAdminLoginSuccess = () => {
+    setIsAdminAuthenticated(true);
+    setIsLoginModalOpen(false);
+    setActiveView('admin');
+    try {
+      sessionStorage.setItem(SESSION_ADMIN_AUTH_KEY, 'true');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleLogoutAdmin = () => {
+    setIsAdminAuthenticated(false);
+    setActiveView('visitor');
+    try {
+      sessionStorage.removeItem(SESSION_ADMIN_AUTH_KEY);
+    } catch (e) {
+      console.error(e);
+    }
+    // Optionally clean URL hash
+    if (window.location.hash.includes('admin')) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      setHasAdminUrlTrigger(false);
+    }
+  };
+
+  const hasAdminAccess = hasAdminUrlTrigger || isAdminAuthenticated;
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
+    <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       
       {/* Header Bar */}
       <Header
@@ -140,6 +216,10 @@ export default function App() {
         favoritesCount={favorites.length}
         showFavoritesOnly={showFavoritesOnly}
         setShowFavoritesOnly={setShowFavoritesOnly}
+        hasAdminAccess={hasAdminAccess}
+        isAdminAuthenticated={isAdminAuthenticated}
+        onOpenAdminLogin={() => setIsLoginModalOpen(true)}
+        onLogoutAdmin={handleLogoutAdmin}
       />
 
       {/* Main Container */}
@@ -155,7 +235,7 @@ export default function App() {
             showFavoritesOnly={showFavoritesOnly}
             setShowFavoritesOnly={setShowFavoritesOnly}
           />
-        ) : (
+        ) : isAdminAuthenticated ? (
           <AdminDashboard
             creatures={creatures}
             onAddCreature={handleAddCreature}
@@ -163,6 +243,20 @@ export default function App() {
             onDeleteCreature={handleDeleteCreature}
             onResetToDefault={handleResetToDefault}
           />
+        ) : (
+          <div className="text-center py-20 px-4 bg-slate-900/80 border border-slate-800 rounded-3xl max-w-lg mx-auto shadow-2xl space-y-4">
+            <ShieldAlert className="w-12 h-12 text-cyan-400 mx-auto" />
+            <h3 className="text-xl font-bold text-slate-100">Admin Authentication Required</h3>
+            <p className="text-xs text-slate-400">
+              Please enter your curator username and password to manage and upload creature photos.
+            </p>
+            <button
+              onClick={() => setIsLoginModalOpen(true)}
+              className="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 text-white font-bold rounded-xl text-xs hover:from-cyan-500 hover:to-teal-500 transition-all shadow-lg shadow-cyan-950/50"
+            >
+              Sign In to Admin Portal
+            </button>
+          </div>
         )}
       </main>
 
@@ -176,11 +270,31 @@ export default function App() {
         hasLiked={selectedCreature ? userLikes.includes(selectedCreature.id) : false}
       />
 
+      {/* Admin Login Authentication Modal */}
+      <AdminLoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleAdminLoginSuccess}
+      />
+
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-900 bg-slate-950/90 py-6 text-center text-xs text-slate-500 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>© {new Date().getFullYear()} Subsea Gallery • Underwater Marine Photography</p>
-          <p className="text-slate-600">Built for marine life enthusiasts, researchers, and underwater photographers</p>
+          <div className="flex items-center gap-3 text-slate-600">
+            <span>Built for marine life enthusiasts & photographers</span>
+            {!hasAdminAccess && (
+              <button
+                onClick={() => {
+                  window.location.hash = 'admin';
+                  checkUrlForAdminTrigger();
+                }}
+                className="hover:text-cyan-400 transition-colors underline decoration-dashed text-[11px]"
+              >
+                Admin Access (#admin)
+              </button>
+            )}
+          </div>
         </div>
       </footer>
 

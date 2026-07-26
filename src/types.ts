@@ -7,8 +7,6 @@ export type CategoryType =
   | 'Nudibranchs & Mollusks' 
   | 'Crustaceans';
 
-export type DepthZone = 'All' | 'Sunlight' | 'Twilight' | 'Midnight';
-
 export type ConservationStatus = 
   | 'Least Concern' 
   | 'Near Threatened' 
@@ -33,7 +31,6 @@ export interface UnderwaterCreature {
   category: Exclude<CategoryType, 'All'>;
   imageUrl: string;
   depthRange: string;
-  depthZone: Exclude<DepthZone, 'All'>;
   location: string;
   conservationStatus: ConservationStatus;
   description: string;
@@ -52,9 +49,8 @@ export interface UnderwaterCreature {
 export interface FilterState {
   searchQuery: string;
   category: CategoryType;
-  depthZone: DepthZone;
   conservationStatus: string;
-  sortBy: 'newest' | 'oldest' | 'likes' | 'name' | 'depth';
+  sortBy: 'newest' | 'oldest' | 'likes' | 'name';
 }
 
 export type ActiveViewMode = 'visitor' | 'admin';

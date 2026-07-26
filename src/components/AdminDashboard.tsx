@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UnderwaterCreature, AdminTab, CategoryType, DepthZone, ConservationStatus } from '../types';
+import { UnderwaterCreature, AdminTab, CategoryType, ConservationStatus } from '../types';
 import { CreatureEditModal } from './CreatureEditModal';
 import { 
   Upload, Plus, Sparkles, Image as ImageIcon, Trash2, Edit3, 
@@ -23,8 +23,6 @@ const CATEGORIES: Exclude<CategoryType, 'All'>[] = [
   'Deep Sea',
   'Crustaceans',
 ];
-
-const DEPTH_ZONES: Exclude<DepthZone, 'All'>[] = ['Sunlight', 'Twilight', 'Midnight'];
 
 const CONSERVATION_STATUSES: ConservationStatus[] = [
   'Least Concern',
@@ -51,7 +49,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [title, setTitle] = useState('');
   const [scientificName, setScientificName] = useState('');
   const [category, setCategory] = useState<Exclude<CategoryType, 'All'>>('Coral Reef');
-  const [depthZone, setDepthZone] = useState<Exclude<DepthZone, 'All'>>('Sunlight');
   const [depthRange, setDepthRange] = useState('5 - 25 meters');
   const [location, setLocation] = useState('Raja Ampat, Indonesia');
   const [conservationStatus, setConservationStatus] = useState<ConservationStatus>('Least Concern');
@@ -126,7 +123,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       if (data.title) setTitle(data.title);
       if (data.scientificName) setScientificName(data.scientificName);
       if (data.category && CATEGORIES.includes(data.category)) setCategory(data.category);
-      if (data.depthZone && DEPTH_ZONES.includes(data.depthZone)) setDepthZone(data.depthZone);
       if (data.depthRange) setDepthRange(data.depthRange);
       if (data.location) setLocation(data.location);
       if (data.conservationStatus && CONSERVATION_STATUSES.includes(data.conservationStatus)) {
@@ -175,7 +171,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       category,
       imageUrl,
       depthRange: depthRange.trim() || '1 - 20 meters',
-      depthZone,
       location: location.trim() || 'Unspecified Ocean Site',
       conservationStatus,
       description: description.trim() || 'No description provided.',
@@ -408,8 +403,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Category, Depth Zone, Conservation Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Category & Conservation Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Category</label>
                   <select
@@ -419,19 +414,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   >
                     {CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Depth Zone</label>
-                  <select
-                    value={depthZone}
-                    onChange={(e) => setDepthZone(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500 cursor-pointer"
-                  >
-                    {DEPTH_ZONES.map((zone) => (
-                      <option key={zone} value={zone}>{zone} Zone</option>
                     ))}
                   </select>
                 </div>
@@ -713,7 +695,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <th className="p-3.5">Photo</th>
                   <th className="p-3.5">Title & Scientific Name</th>
                   <th className="p-3.5">Category</th>
-                  <th className="p-3.5">Depth Zone</th>
+                  <th className="p-3.5">Depth Range</th>
                   <th className="p-3.5">Likes</th>
                   <th className="p-3.5">Featured</th>
                   <th className="p-3.5 text-right">Actions</th>
@@ -741,7 +723,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </span>
                     </td>
                     <td className="p-3.5">
-                      <span className="text-slate-300">{creature.depthZone} ({creature.depthRange})</span>
+                      <span className="text-slate-300">{creature.depthRange}</span>
                     </td>
                     <td className="p-3.5 font-bold text-rose-300">
                       ♥ {creature.likes}
@@ -819,11 +801,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
-            <p className="text-xs text-slate-400 font-medium">Deep-Sea / Midnight Entries</p>
+            <p className="text-xs text-slate-400 font-medium">Deep Sea & Macro Discoveries</p>
             <p className="text-3xl font-extrabold text-purple-300 mt-2">
-              {creatures.filter((c) => c.depthZone === 'Midnight').length}
+              {creatures.filter((c) => c.category === 'Deep Sea' || c.category === 'Macro').length}
             </p>
-            <p className="text-[11px] text-slate-500 mt-1">Subsea 200m+ captures</p>
+            <p className="text-[11px] text-slate-500 mt-1">Specialized photography entries</p>
           </div>
         </div>
       )}

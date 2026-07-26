@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { UnderwaterCreature, FilterState, CategoryType, DepthZone } from '../types';
+import { UnderwaterCreature, FilterState, CategoryType } from '../types';
 import { CreatureCard } from './CreatureCard';
-import { DepthMapView } from './DepthMapView';
 import { 
   Search, SlidersHorizontal, ArrowUpDown, X, Layers, Grid, Waves, 
   Sparkles, Filter, Bookmark, ShieldAlert 
@@ -28,8 +27,6 @@ const CATEGORIES: CategoryType[] = [
   'Crustaceans',
 ];
 
-const DEPTH_ZONES: DepthZone[] = ['All', 'Sunlight', 'Twilight', 'Midnight'];
-
 export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
   creatures,
   onSelectCreature,
@@ -40,12 +37,9 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
   showFavoritesOnly,
   setShowFavoritesOnly,
 }) => {
-  const [viewLayout, setViewLayout] = useState<'grid' | 'depth'>('grid');
-  
   const [filterState, setFilterState] = useState<FilterState>({
     searchQuery: '',
     category: 'All',
-    depthZone: 'All',
     conservationStatus: 'All',
     sortBy: 'newest',
   });
@@ -79,11 +73,6 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
           return false;
         }
 
-        // Depth Zone
-        if (filterState.depthZone !== 'All' && item.depthZone !== filterState.depthZone) {
-          return false;
-        }
-
         // Conservation Status
         if (filterState.conservationStatus !== 'All' && item.conservationStatus !== filterState.conservationStatus) {
           return false;
@@ -111,7 +100,6 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
   const hasActiveFilters = 
     filterState.searchQuery !== '' ||
     filterState.category !== 'All' ||
-    filterState.depthZone !== 'All' ||
     filterState.conservationStatus !== 'All' ||
     showFavoritesOnly;
 
@@ -119,7 +107,6 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
     setFilterState({
       searchQuery: '',
       category: 'All',
-      depthZone: 'All',
       conservationStatus: 'All',
       sortBy: 'newest',
     });
@@ -132,7 +119,7 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
       {/* Search & Filter Controls Bar */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-5">
         
-        {/* Top Row: Search input + View Switcher + Sort */}
+        {/* Top Row: Search input + Sort */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           
           {/* Search Bar */}
@@ -156,39 +143,8 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
             )}
           </div>
 
-          {/* Right Controls: View Layouts & Sort selector */}
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-            
-            {/* View Mode Toggle */}
-            <div className="p-1 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-1">
-              <button
-                id="view-mode-grid"
-                onClick={() => setViewLayout('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewLayout === 'grid'
-                    ? 'bg-slate-800 text-cyan-300 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Grid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Grid View</span>
-              </button>
-
-              <button
-                id="view-mode-depth"
-                onClick={() => setViewLayout('depth')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewLayout === 'depth'
-                    ? 'bg-slate-800 text-cyan-300 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Depth Profile</span>
-              </button>
-            </div>
-
-            {/* Sort Selector */}
+          {/* Right Controls: Sort selector */}
+          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
             <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300">
               <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <select
@@ -203,7 +159,6 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
                 <option value="oldest" className="bg-slate-900">Oldest First</option>
               </select>
             </div>
-
           </div>
 
         </div>
@@ -246,35 +201,12 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
           </div>
         </div>
 
-        {/* Secondary Row: Depth Zone & Conservation status */}
-        <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs">
-          
-          {/* Depth Zone filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-medium">Depth Zone:</span>
-            <div className="flex items-center gap-1.5">
-              {DEPTH_ZONES.map((zone) => (
-                <button
-                  key={zone}
-                  onClick={() => setFilterState((prev) => ({ ...prev, depthZone: zone }))}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                    filterState.depthZone === zone
-                      ? 'bg-slate-800 text-cyan-300 border border-cyan-800'
-                      : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                >
-                  {zone}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Results Summary */}
-          <div className="text-slate-400 font-medium">
+        {/* Results Summary */}
+        <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-medium">
+          <div>
             Showing <span className="text-cyan-300 font-bold">{filteredCreatures.length}</span> of {creatures.length} creature photos
             {showFavoritesOnly && <span className="ml-2 text-rose-400 font-semibold">(Saved Favorites Only)</span>}
           </div>
-
         </div>
 
       </div>
@@ -294,15 +226,6 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
             Clear All Filters
           </button>
         </div>
-      ) : viewLayout === 'depth' ? (
-        <DepthMapView
-          creatures={filteredCreatures}
-          onSelectCreature={onSelectCreature}
-          favorites={favorites}
-          onToggleFavorite={onToggleFavorite}
-          onLike={onLike}
-          userLikes={userLikes}
-        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredCreatures.map((creature) => (

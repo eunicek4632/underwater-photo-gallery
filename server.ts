@@ -80,7 +80,6 @@ Return JSON matching the schema strictly.`;
                 description: 'Must be one of: Coral Reef, Deep Sea, Macro, Pelagic & Predators, Nudibranchs & Mollusks, Crustaceans' 
               },
               depthRange: { type: Type.STRING, description: 'Estimated depth range in meters (e.g. "5 - 25 meters")' },
-              depthZone: { type: Type.STRING, description: 'Must be one of: Sunlight, Twilight, Midnight' },
               location: { type: Type.STRING, description: 'Typical location or dive site (e.g. "Great Barrier Reef, Australia")' },
               conservationStatus: { 
                 type: Type.STRING, 
@@ -107,7 +106,7 @@ Return JSON matching the schema strictly.`;
                 description: '3-5 descriptive tags for search'
               }
             },
-            required: ['title', 'scientificName', 'category', 'depthRange', 'depthZone', 'location', 'conservationStatus', 'description', 'habitat', 'diet'],
+            required: ['title', 'scientificName', 'category', 'depthRange', 'location', 'conservationStatus', 'description', 'habitat', 'diet'],
           },
         },
       });
@@ -137,7 +136,7 @@ You are answering a visitor's question about the following underwater creature:
 - Common Name: ${creature.title}
 - Scientific Name: ${creature.scientificName}
 - Category: ${creature.category}
-- Depth Zone: ${creature.depthZone} (${creature.depthRange})
+- Depth Range: ${creature.depthRange}
 - Location: ${creature.location}
 - Conservation Status: ${creature.conservationStatus}
 - Description: ${creature.description}

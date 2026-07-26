@@ -1,5 +1,5 @@
 import React from 'react';
-import { Waves, Fish, ShieldCheck, Plus, Sparkles, LayoutGrid, BarChart2 } from 'lucide-react';
+import { Waves, Fish, ShieldCheck, LogOut, Lock } from 'lucide-react';
 import { ActiveViewMode } from '../types';
 
 interface HeaderProps {
@@ -9,6 +9,10 @@ interface HeaderProps {
   favoritesCount: number;
   showFavoritesOnly: boolean;
   setShowFavoritesOnly: (show: boolean) => void;
+  hasAdminAccess: boolean;
+  isAdminAuthenticated: boolean;
+  onOpenAdminLogin: () => void;
+  onLogoutAdmin: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +22,10 @@ export const Header: React.FC<HeaderProps> = ({
   favoritesCount,
   showFavoritesOnly,
   setShowFavoritesOnly,
+  hasAdminAccess,
+  isAdminAuthenticated,
+  onOpenAdminLogin,
+  onLogoutAdmin,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-cyan-900/50 text-slate-100 shadow-xl">
@@ -69,37 +77,60 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Mode Switcher Buttons */}
-          <div className="p-1 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center gap-1 shadow-inner">
-            <button
-              id="mode-visitor-tab"
-              onClick={() => {
-                setActiveView('visitor');
-                setShowFavoritesOnly(false);
-              }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeView === 'visitor'
-                  ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/50 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <Fish className="w-4 h-4" />
-              <span>Visitor View</span>
-            </button>
+          {/* Admin Tag/Button - ONLY shown if URL triggered or authenticated */}
+          {hasAdminAccess ? (
+            <div className="p-1 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center gap-1 shadow-inner">
+              <button
+                id="mode-visitor-tab"
+                onClick={() => {
+                  setActiveView('visitor');
+                  setShowFavoritesOnly(false);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  activeView === 'visitor'
+                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/50 font-semibold'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                <Fish className="w-4 h-4" />
+                <span>Visitor View</span>
+              </button>
 
-            <button
-              id="mode-admin-tab"
-              onClick={() => setActiveView('admin')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeView === 'admin'
-                  ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-950/50 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Admin Portal</span>
-            </button>
-          </div>
+              <button
+                id="mode-admin-tab"
+                onClick={() => {
+                  if (isAdminAuthenticated) {
+                    setActiveView('admin');
+                  } else {
+                    onOpenAdminLogin();
+                  }
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  activeView === 'admin'
+                    ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-950/50 font-semibold'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Admin Portal</span>
+              </button>
+
+              {isAdminAuthenticated && (
+                <button
+                  onClick={onLogoutAdmin}
+                  title="Log out of Admin Portal"
+                  className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ) : (
+            /* Normal visitor view - no admin tab shown */
+            <div className="text-xs text-cyan-400/60 font-mono tracking-wider hidden md:block border border-slate-800 px-3 py-1.5 rounded-xl bg-slate-950/50">
+              🌊 Visitor Access Mode
+            </div>
+          )}
 
         </div>
 

@@ -19,20 +19,6 @@ export const CreatureCard: React.FC<CreatureCardProps> = ({
   onLike,
   hasLiked,
 }) => {
-  // Depth zone color badges
-  const getDepthBadge = (zone: string) => {
-    switch (zone) {
-      case 'Sunlight':
-        return 'bg-amber-500/10 text-amber-300 border-amber-500/30';
-      case 'Twilight':
-        return 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30';
-      case 'Midnight':
-        return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
-      default:
-        return 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30';
-    }
-  };
-
   // Conservation status colors
   const getConservationColor = (status: string) => {
     switch (status) {
@@ -65,11 +51,7 @@ export const CreatureCard: React.FC<CreatureCardProps> = ({
 
         {/* Top Badges Overlay */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
-          <span
-            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border backdrop-blur-md shadow-sm ${getDepthBadge(
-              creature.depthZone
-            )}`}
-          >
+          <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold border border-cyan-500/30 bg-slate-950/70 text-cyan-300 backdrop-blur-md shadow-sm">
             {creature.depthRange}
           </span>
 

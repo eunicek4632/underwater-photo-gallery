@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UnderwaterCreature, CategoryType, DepthZone, ConservationStatus } from '../types';
+import { UnderwaterCreature, CategoryType, ConservationStatus } from '../types';
 import { X, Check, Camera, Image as ImageIcon, MapPin, Layers, ShieldAlert, Tag, Save } from 'lucide-react';
 
 interface CreatureEditModalProps {
@@ -16,8 +16,6 @@ const CATEGORIES: Exclude<CategoryType, 'All'>[] = [
   'Deep Sea',
   'Crustaceans',
 ];
-
-const DEPTH_ZONES: Exclude<DepthZone, 'All'>[] = ['Sunlight', 'Twilight', 'Midnight'];
 
 const CONSERVATION_STATUSES: ConservationStatus[] = [
   'Least Concern',
@@ -112,7 +110,7 @@ export const CreatureEditModal: React.FC<CreatureEditModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-slate-400 font-medium mb-1">Category</label>
               <select
@@ -122,19 +120,6 @@ export const CreatureEditModal: React.FC<CreatureEditModalProps> = ({
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-slate-400 font-medium mb-1">Depth Zone</label>
-              <select
-                value={formData.depthZone}
-                onChange={(e) => handleChange('depthZone', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-500 cursor-pointer"
-              >
-                {DEPTH_ZONES.map((zone) => (
-                  <option key={zone} value={zone}>{zone}</option>
                 ))}
               </select>
             </div>

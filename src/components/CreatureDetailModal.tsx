@@ -162,7 +162,7 @@ export const CreatureDetailModal: React.FC<CreatureDetailModalProps> = ({
 
               <div className="text-right">
                 <p className="font-semibold text-cyan-300">{creature.depthRange}</p>
-                <p className="text-slate-400 text-[11px]">{creature.depthZone} Zone</p>
+                <p className="text-slate-400 text-[11px]">{creature.category}</p>
               </div>
             </div>
           </div>
