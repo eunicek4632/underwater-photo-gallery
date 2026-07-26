@@ -181,44 +181,6 @@ export const CreatureEditModal: React.FC<CreatureEditModalProps> = ({
             />
           </div>
 
-          {/* Camera specs */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-            <p className="font-semibold text-slate-300 flex items-center gap-1.5">
-              <Camera className="w-4 h-4 text-cyan-400" />
-              <span>Camera Specs</span>
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-slate-500 mb-1">Camera</label>
-                <input
-                  type="text"
-                  value={formData.cameraEquipment.camera || ''}
-                  onChange={(e) => handleCameraChange('camera', e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-200"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-500 mb-1">Lens</label>
-                <input
-                  type="text"
-                  value={formData.cameraEquipment.lens || ''}
-                  onChange={(e) => handleCameraChange('lens', e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-200"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-500 mb-1">Strobe / Light</label>
-                <input
-                  type="text"
-                  value={formData.cameraEquipment.lighting || ''}
-                  onChange={(e) => handleCameraChange('lighting', e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-200"
-                />
-              </div>
-            </div>
-          </div>
-
           <div>
             <label className="block text-slate-400 font-medium mb-1">Tags (comma-separated)</label>
             <input

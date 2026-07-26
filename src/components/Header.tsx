@@ -125,12 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
             </div>
-          ) : (
-            /* Normal visitor view - no admin tab shown */
-            <div className="text-xs text-cyan-400/60 font-mono tracking-wider hidden md:block border border-slate-800 px-3 py-1.5 rounded-xl bg-slate-950/50">
-              🌊 Visitor Access Mode
-            </div>
-          )}
+          ) : null}
 
         </div>
 

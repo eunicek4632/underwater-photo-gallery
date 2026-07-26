@@ -283,17 +283,6 @@ export default function App() {
           <p>© {new Date().getFullYear()} Subsea Gallery • Underwater Marine Photography</p>
           <div className="flex items-center gap-3 text-slate-600">
             <span>Built for marine life enthusiasts & photographers</span>
-            {!hasAdminAccess && (
-              <button
-                onClick={() => {
-                  window.location.hash = 'admin';
-                  checkUrlForAdminTrigger();
-                }}
-                className="hover:text-cyan-400 transition-colors underline decoration-dashed text-[11px]"
-              >
-                Admin Access (#admin)
-              </button>
-            )}
           </div>
         </div>
       </footer>

@@ -181,7 +181,7 @@ export const VisitorGallery: React.FC<VisitorGalleryProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 subsea-scrollbar">
             {CATEGORIES.map((cat) => {
               const isSelected = filterState.category === cat;
               return (

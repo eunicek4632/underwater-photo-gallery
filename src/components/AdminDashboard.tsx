@@ -491,83 +491,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Camera Gear Specs */}
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                <p className="font-semibold text-xs text-slate-200 flex items-center gap-1.5">
-                  <Camera className="w-4 h-4 text-cyan-400" />
-                  <span>Underwater Photography Gear & EXIF Data</span>
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Camera Body"
-                    value={camera}
-                    onChange={(e) => setCamera(e.target.value)}
-                    className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Lens"
-                    value={lens}
-                    onChange={(e) => setLens(e.target.value)}
-                    className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Strobe / Light"
-                    value={lighting}
-                    onChange={(e) => setLighting(e.target.value)}
-                    className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Aperture (e.g. f/8.0)"
-                    value={aperture}
-                    onChange={(e) => setAperture(e.target.value)}
-                    className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Shutter (e.g. 1/200s)"
-                    value={shutterSpeed}
-                    onChange={(e) => setShutterSpeed(e.target.value)}
-                    className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200"
-                  />
-                  <input
-                    type="text"
-                    placeholder="ISO (e.g. ISO 100)"
-                    value={iso}
-                    onChange={(e) => setIso(e.target.value)}
-                    className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200"
-                  />
-                </div>
-              </div>
-
-              {/* Photographer & Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Photographer Credit</label>
-                  <input
-                    type="text"
-                    value={photographer}
-                    onChange={(e) => setPhotographer(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Date Taken</label>
-                  <input
-                    type="date"
-                    value={dateTaken}
-                    onChange={(e) => setDateTaken(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100"
-                  />
-                </div>
+              {/* Date Taken */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Date Taken</label>
+                <input
+                  type="date"
+                  value={dateTaken}
+                  onChange={(e) => setDateTaken(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100"
+                />
               </div>
 
               {/* Tags & Featured checkbox */}
